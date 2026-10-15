@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+/* ————————————————————————————————
+   Workbrio brand theme
+   Deep-blue base · blue → purple → pink gradient accents
+   ———————————————————————————————— */
+
+@theme {
+  /* Deep blue surfaces */
+  --color-ink-950: #060d1f;
+  --color-ink-900: #0a1730;
+  --color-ink-800: #10234d;
+  --color-ink-700: #1a3268;
+
+  /* Gradient accent ramp (matches the logo) */
+  --color-brand-400: #5b9dff;
+  --color-brand-500: #2e7cf6;
+  --color-brand-600: #1f63d8;
+  --color-grape-500: #8b5cf6;
+  --color-flare-500: #ec4899;
+  --color-flare-600: #d62f84;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+}
+
+:root {
+  --wb-gradient: linear-gradient(120deg, #2e7cf6 0%, #8b5cf6 50%, #ec4899 100%);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #ffffff;
+  color: #0a1730;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Gradient text helper */
+.text-gradient {
+  background: var(--wb-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gradient button background */
+.bg-gradient-brand {
+  background: var(--wb-gradient);
+}
+
+/* Subtle card ring used across the app */
+.card-ring {
+  border: 1px solid rgb(226 232 240);
+}
+
+::selection {
+  background: #8b5cf6;
+  color: #fff;
+}
