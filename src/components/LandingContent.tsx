@@ -9,10 +9,10 @@ import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
 import { useLanguage } from "@/components/LanguageProvider";
 const STATS = [
-  { value: "120+", label: "Countries" },
-  { value: "40k+", label: "Freelancers" },
-  { value: "8k+", label: "Projects posted" },
-  { value: "4.9", label: "Average rating" },
+  { value: "100%", label: "Free forever" },
+  { value: "10", label: "Languages" },
+  { value: "0%", label: "Commission" },
+  { value: "14+", label: "Members & growing" },
 ];
 
 /** Fiverr-style popular service categories → job search. */
@@ -106,27 +106,6 @@ const HOW_STEPS = {
     { title: "landing.howF3t", text: "landing.howF3d" },
   ],
 };
-
-const TESTIMONIALS = [
-  {
-    quote:
-      "I landed my first three clients within two weeks of completing my profile. The proposal flow is the simplest I've used anywhere.",
-    name: "Daniel Okafor",
-    role: "Web Developer · Lagos, Nigeria",
-  },
-  {
-    quote:
-      "Hiring used to mean weeks of back-and-forth. On Workbrio I posted a job in the morning and was chatting with shortlisted designers by lunch.",
-    name: "Sofia Marchetti",
-    role: "Startup Founder · Milan, Italy",
-  },
-  {
-    quote:
-      "The feed keeps me visible even between projects. Clients find me through my posts — it's networking that actually works.",
-    name: "Priya Sharma",
-    role: "Content Strategist · Bengaluru, India",
-  },
-];
 
 /** Workbrio vs competitors — translation keys per row. */
 const COMPARE_ROWS = [
@@ -317,8 +296,11 @@ export function LandingContent() {
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-5">
-            {/* Sample freelancer profile */}
-            <Card className="lg:col-span-2">
+            {/* Sample freelancer profile — clearly labeled as demo */}
+            <Card className="relative lg:col-span-2">
+              <span className="absolute right-4 top-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
+                Sample
+              </span>
               <div className="flex items-start gap-4">
                 <Image
                   src="/avatar-sample.jpg"
@@ -438,32 +420,29 @@ export function LandingContent() {
         </div>
       </section>
 
-      {/* ————— TESTIMONIALS ————— */}
+      {/* ————— EARLY COMMUNITY (honest: no fake testimonials) ————— */}
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-bold uppercase tracking-widest text-flare-600">
-              Early members
+              Just launched
             </p>
             <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink-900">
-              People are already working with brio
+              Join our early community
             </h2>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.name} className="flex flex-col">
-                <p className="text-2xl text-gradient" aria-hidden>
-                  ★★★★★
-                </p>
-                <blockquote className="mt-3 flex-1 text-[0.95rem] leading-relaxed text-slate-600">
-                  &ldquo;{t.quote}&rdquo;
-                </blockquote>
-                <footer className="mt-6 border-t border-slate-100 pt-4">
-                  <p className="font-bold text-ink-900">{t.name}</p>
-                  <p className="text-sm text-slate-500">{t.role}</p>
-                </footer>
-              </Card>
-            ))}
+            <p className="mt-4 text-lg text-slate-600">
+              Workbrio is brand new — be among the first freelancers and clients
+              shaping a 100% free professional network. Your story could be
+              featured here soon.
+            </p>
+            <div className="mt-8">
+              <a
+                href="/signup"
+                className="inline-block rounded-full bg-flare-600 px-8 py-3 font-bold text-white shadow-lg transition hover:bg-flare-700"
+              >
+                Get started — it&rsquo;s free
+              </a>
+            </div>
           </div>
         </div>
       </section>
