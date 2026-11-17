@@ -85,17 +85,56 @@ export type JobStatus = "open" | "closed" | "in_progress";
 export type BudgetType = "fixed" | "hourly";
 export type ProposalStatus = "pending" | "accepted" | "declined";
 
+/** Real employment jobs (M6): full-time, part-time, contract, internship, remote. */
+export type JobType =
+  | "full-time"
+  | "part-time"
+  | "contract"
+  | "internship"
+  | "remote";
+
+export const JOB_TYPES: JobType[] = [
+  "full-time",
+  "part-time",
+  "contract",
+  "internship",
+  "remote",
+];
+
+export const JOB_TYPE_LABELS: Record<JobType, string> = {
+  "full-time": "Full-time",
+  "part-time": "Part-time",
+  contract: "Contract",
+  internship: "Internship",
+  remote: "Remote",
+};
+
 export type Job = {
   id: string;
   client_id: string;
   title: string;
   description: string;
   budget_type: BudgetType;
-  budget_amount: number;
+  /** Null when the salary/budget is not published — shown as "Salary not listed". */
+  budget_amount: number | null;
   skills_required: string[];
   status: JobStatus;
   created_at: string;
   updated_at: string;
+  /** M6 job-board fields — all optional; empty for classic freelance gigs. */
+  company_name: string | null;
+  /** Country/city, e.g. "Lahore, Pakistan" or "Remote — Worldwide". */
+  location: string | null;
+  /** Where to apply (the employer's real page). Null = apply via Workbrio proposal. */
+  apply_url: string | null;
+  /** Last date to apply (YYYY-MM-DD). Null = no published deadline. */
+  deadline: string | null;
+  job_type: JobType | null;
+  /** Where this job was found, e.g. "Rozee.pk". Shown so anyone can verify it. */
+  source_name: string | null;
+  /** M6b: one generic photo for the job card (Unsplash/Pexels hotlink).
+      Null = no banner; the card looks exactly as before. */
+  image_url: string | null;
 };
 
 export type Proposal = {
@@ -147,10 +186,26 @@ export function timeAgo(iso: string): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-/** "$1,200 fixed" / "$45/hr" budget label. */
-export function budgetLabel(type: BudgetType, amount: number): string {
+/** "$1,200 fixed" / "$45/hr" budget label — or "Salary not listed" when unpublished. */
+export function budgetLabel(type: BudgetType, amount: number | null): string {
+  if (amount == null) return "Salary not listed";
   const formatted = `$${Number(amount).toLocaleString("en-US")}`;
   return type === "hourly" ? `${formatted}/hr` : `${formatted} fixed`;
+}
+
+/** "12 Dec 2026" for a YYYY-MM-DD deadline (UTC-safe, no timezone shift). */
+export function deadlineLabel(iso: string | null): string | null {
+  if (!iso) return null;
+  const parts = iso.slice(0, 10).split("-");
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts.map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /* ---------------- M3: Feed ---------------- */
