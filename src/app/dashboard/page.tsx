@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { AppNavbar } from "@/components/AppNavbar";
 import { Footer } from "@/components/Footer";
 import { StatsDisplay } from "@/components/StatsDisplay";
+import { ADMIN_EMAIL } from "@/lib/site";
 
 /** This page reads the live session via cookies(), so it is always rendered dynamically. */
 
@@ -58,31 +59,37 @@ export default async function DashboardPage() {
 
   const role = (user.user_metadata?.role as string | undefined) ?? "member";
 
-  // Website visit stats for the "Kitne log aaye?" card.
+  // Site analytics are admin-only: only the owner account sees them.
+  const isAdmin =
+    (user.email ?? "").toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  // Website visit stats for the "Kitne log aaye?" card (admin only).
   let statTotal = 0;
   let statToday = 0;
   let statUnique7d = 0;
-  try {
-    const dayStart = new Date();
-    dayStart.setHours(0, 0, 0, 0);
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [{ count: tc }, { count: tdc }, { data: wr }] = await Promise.all([
-      supabase.from("page_views").select("id", { count: "exact", head: true }),
-      supabase
-        .from("page_views")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", dayStart.toISOString()),
-      supabase
-        .from("page_views")
-        .select("visitor_key")
-        .gte("created_at", weekAgo.toISOString())
-        .limit(5000),
-    ]);
-    statTotal = tc ?? 0;
-    statToday = tdc ?? 0;
-    statUnique7d = new Set((wr ?? []).map((r) => r.visitor_key)).size;
-  } catch {
-    /* page_views table not created yet → zeros */
+  if (isAdmin) {
+    try {
+      const dayStart = new Date();
+      dayStart.setHours(0, 0, 0, 0);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const [{ count: tc }, { count: tdc }, { data: wr }] = await Promise.all([
+        supabase.from("page_views").select("id", { count: "exact", head: true }),
+        supabase
+          .from("page_views")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", dayStart.toISOString()),
+        supabase
+          .from("page_views")
+          .select("visitor_key")
+          .gte("created_at", weekAgo.toISOString())
+          .limit(5000),
+      ]);
+      statTotal = tc ?? 0;
+      statToday = tdc ?? 0;
+      statUnique7d = new Set((wr ?? []).map((r) => r.visitor_key)).size;
+    } catch {
+      /* page_views table not created yet → zeros */
+    }
   }
 
   const quickLinks =
@@ -150,13 +157,15 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="mt-6">
-          <StatsDisplay
-            total={statTotal}
-            today={statToday}
-            unique7d={statUnique7d}
-          />
-        </div>
+        {isAdmin && (
+          <div className="mt-6">
+            <StatsDisplay
+              total={statTotal}
+              today={statToday}
+              unique7d={statUnique7d}
+            />
+          </div>
+        )}
 
         <h2 className="mt-12 text-xl font-extrabold text-ink-900">
           Quick links
