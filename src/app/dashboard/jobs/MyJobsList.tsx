@@ -138,6 +138,13 @@ export function MyJobsList({
                   {budgetLabel(job.budget_type, job.budget_amount)} · posted{" "}
                   {timeAgo(job.created_at)}
                 </p>
+                {(job.company_name || job.location || job.job_type) && (
+                  <p className="mt-1 text-sm text-slate-500">
+                    {[job.company_name, job.location, job.job_type]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
                 {job.skills_required.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {job.skills_required.slice(0, 5).map((s) => (
