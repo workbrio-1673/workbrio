@@ -20,9 +20,6 @@ export default function AuthCodeErrorPage() {
           </Button>
         </div>
       </div>
-      <p className="mt-6 text-center text-sm text-slate-500">
-        Need help? <Link href="mailto:hello@workbrio.com" className="font-semibold text-brand-600">Contact us</Link>
-      </p>
     </AuthShell>
   );
 }
