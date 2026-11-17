@@ -10,7 +10,7 @@ type RelatedJob = {
   id: string;
   title: string;
   budget_type: "fixed" | "hourly";
-  budget_amount: number;
+  budget_amount: number | null;
   skills_required: string[];
 };
 

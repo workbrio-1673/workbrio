@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Input } from "./Input";
 import { Button } from "./Button";
 import { SkillChip } from "./SkillChip";
-import type { BudgetType, Job, Skill } from "@/lib/supabase/types";
+import type { BudgetType, Job, JobType, Skill } from "@/lib/supabase/types";
+import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/supabase/types";
 
 type JobFormProps = {
   userId: string;
@@ -35,8 +36,19 @@ export function JobForm({
     initialJob?.budget_type ?? "fixed"
   );
   const [budgetAmount, setBudgetAmount] = useState(
-    initialJob ? String(initialJob.budget_amount) : ""
+    initialJob?.budget_amount != null ? String(initialJob.budget_amount) : ""
   );
+  /* M6 job-board fields — all optional; empty for classic freelance gigs. */
+  const [company, setCompany] = useState(initialJob?.company_name ?? "");
+  const [location, setLocation] = useState(initialJob?.location ?? "");
+  const [jobType, setJobType] = useState<JobType | "">(
+    initialJob?.job_type ?? ""
+  );
+  const [applyUrl, setApplyUrl] = useState(initialJob?.apply_url ?? "");
+  const [deadline, setDeadline] = useState(
+    initialJob?.deadline ? initialJob.deadline.slice(0, 10) : ""
+  );
+  const [source, setSource] = useState(initialJob?.source_name ?? "");
   const [skills, setSkills] = useState<string[]>(initialJob?.skills_required ?? []);
   const [skillInput, setSkillInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -67,7 +79,14 @@ export function JobForm({
     setError(null);
     const cleanTitle = title.trim();
     const cleanDescription = description.trim();
-    const amount = Number(budgetAmount);
+    const cleanCompany = company.trim();
+    const cleanLocation = location.trim();
+    const cleanApplyUrl = applyUrl.trim();
+    const cleanSource = source.trim();
+    /* Budget is optional: leave blank when the pay is not published —
+       it shows as "Salary not listed", never an invented number. */
+    const budgetText = budgetAmount.trim();
+    const amount = budgetText === "" ? null : Number(budgetText);
     if (cleanTitle.length < 8) {
       setError("Please give your job a clear title (at least 8 characters).");
       return;
@@ -76,8 +95,15 @@ export function JobForm({
       setError("Please describe the job in a bit more detail (at least 30 characters).");
       return;
     }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError("Please enter a valid budget amount greater than 0.");
+    if (amount !== null && (!Number.isFinite(amount) || amount <= 0)) {
+      setError("Please enter a valid budget amount greater than 0, or leave it blank.");
+      return;
+    }
+    if (
+      cleanApplyUrl !== "" &&
+      !/^https?:\/\/.+/.test(cleanApplyUrl)
+    ) {
+      setError("The apply link must start with http:// or https://");
       return;
     }
 
@@ -91,6 +117,12 @@ export function JobForm({
         budget_type: budgetType,
         budget_amount: amount,
         skills_required: skills,
+        company_name: cleanCompany === "" ? null : cleanCompany,
+        location: cleanLocation === "" ? null : cleanLocation,
+        job_type: jobType === "" ? null : jobType,
+        apply_url: cleanApplyUrl === "" ? null : cleanApplyUrl,
+        deadline: deadline === "" ? null : deadline,
+        source_name: cleanSource === "" ? null : cleanSource,
       };
       if (initialJob) {
         const { error: upErr } = await supabase
@@ -144,6 +176,87 @@ export function JobForm({
         />
       </div>
 
+      {/* Job-board details — for real employment jobs (Pakistan + international).
+          All optional: leave empty for a classic freelance gig. */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <h2 className="text-sm font-extrabold text-ink-900">
+          Employment job details <span className="font-semibold text-slate-400">(optional)</span>
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+          For a real job from an employer: add the company, place, apply link
+          and last date. Only use real, published details — never invent a
+          salary, deadline or link.
+        </p>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Company"
+            placeholder="e.g. National Bank of Pakistan"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            maxLength={120}
+          />
+          <Input
+            label="Location"
+            placeholder="e.g. Lahore, Pakistan or Remote — Worldwide"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            maxLength={120}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="jobform-type"
+              className="mb-1.5 block text-sm font-semibold text-ink-900"
+            >
+              Job type
+            </label>
+            <select
+              id="jobform-type"
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value as JobType | "")}
+              className="h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-[0.95rem] text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+            >
+              <option value="">Not specified</option>
+              {JOB_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {JOB_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Input
+            label="Last date to apply"
+            type="date"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+        </div>
+
+        <div className="mt-4">
+          <Input
+            label="Apply link"
+            type="url"
+            placeholder="https://… (the employer's real application page)"
+            value={applyUrl}
+            onChange={(e) => setApplyUrl(e.target.value)}
+            maxLength={500}
+          />
+        </div>
+
+        <div className="mt-4">
+          <Input
+            label="Source"
+            placeholder="e.g. Rozee.pk — where this job was found"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            maxLength={120}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label
@@ -170,7 +283,11 @@ export function JobForm({
           </div>
         </div>
         <Input
-          label={budgetType === "fixed" ? "Budget (USD)" : "Hourly rate (USD)"}
+          label={
+            budgetType === "fixed"
+              ? "Budget (USD) — optional"
+              : "Hourly rate (USD) — optional"
+          }
           type="number"
           min="1"
           step="any"
@@ -179,6 +296,10 @@ export function JobForm({
           onChange={(e) => setBudgetAmount(e.target.value)}
         />
       </div>
+      <p className="-mt-2 text-xs text-slate-500">
+        Leave the budget blank when the pay is not published — the job will
+        show “Salary not listed”.
+      </p>
 
       <div>
         <label

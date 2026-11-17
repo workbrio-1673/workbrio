@@ -2,7 +2,12 @@ import Link from "next/link";
 import { Card } from "./Card";
 import { SkillChip } from "./SkillChip";
 import type { JobWithClient } from "@/lib/supabase/types";
-import { budgetLabel, timeAgo } from "@/lib/supabase/types";
+import {
+  budgetLabel,
+  deadlineLabel,
+  JOB_TYPE_LABELS,
+  timeAgo,
+} from "@/lib/supabase/types";
 
 const STATUS_STYLES: Record<string, string> = {
   open: "bg-emerald-500/10 text-emerald-600",
@@ -21,6 +26,15 @@ export function JobCard({ job }: { job: JobWithClient }) {
   return (
     <Link href={`/jobs/${job.id}`} className="block h-full">
       <Card className="flex h-full flex-col transition-shadow hover:shadow-lg">
+        {job.image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={job.image_url}
+            alt={job.title}
+            loading="lazy"
+            className="-mx-6 -mt-6 mb-5 aspect-[16/9] w-full shrink-0 rounded-t-2xl object-cover"
+          />
+        )}
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-lg font-extrabold leading-snug text-ink-900">
             {job.title}
@@ -37,6 +51,27 @@ export function JobCard({ job }: { job: JobWithClient }) {
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
           {job.description}
         </p>
+
+        {(job.company_name || job.location || job.job_type || job.deadline) && (
+          <div className="mt-3 space-y-1 text-sm">
+            {job.company_name && (
+              <p className="font-bold text-slate-700">{job.company_name}</p>
+            )}
+            <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500">
+              {job.location && <span>📍 {job.location}</span>}
+              {job.job_type && (
+                <span className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-xs font-bold text-brand-600">
+                  {JOB_TYPE_LABELS[job.job_type]}
+                </span>
+              )}
+              {job.deadline && (
+                <span className="font-semibold text-amber-600">
+                  Apply by {deadlineLabel(job.deadline)}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         {job.skills_required.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5">

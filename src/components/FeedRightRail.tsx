@@ -14,7 +14,7 @@ export type TrendingJob = {
   id: string;
   title: string;
   budget_type: "fixed" | "hourly";
-  budget_amount: number;
+  budget_amount: number | null;
 };
 
 /** Right rail on /feed — suggested people + trending jobs for easy discovery. */
@@ -95,9 +95,15 @@ export function FeedRightRail({
                 {j.title}
               </p>
               <p className="text-xs text-slate-500">
-                {j.budget_type === "hourly" ? t("jobs.hourly") : t("jobs.fixed")} · $
-                {Number(j.budget_amount).toLocaleString()}
-                {j.budget_type === "hourly" ? "/hr" : ""}
+                {j.budget_amount != null ? (
+                  <>
+                    {j.budget_type === "hourly" ? t("jobs.hourly") : t("jobs.fixed")} · $
+                    {Number(j.budget_amount).toLocaleString()}
+                    {j.budget_type === "hourly" ? "/hr" : ""}
+                  </>
+                ) : (
+                  "Salary not listed"
+                )}
               </p>
             </Link>
           ))}
