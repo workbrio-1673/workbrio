@@ -209,7 +209,8 @@ export default async function FeedPage() {
                   id: String(j.id),
                   title: String(j.title),
                   budget_type: j.budget_type as "fixed" | "hourly",
-                  budget_amount: Number(j.budget_amount),
+                  budget_amount:
+                    j.budget_amount != null ? Number(j.budget_amount) : null,
                 }))}
               />
             </div>
