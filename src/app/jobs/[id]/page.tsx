@@ -15,7 +15,12 @@ import type {
   JobWithClient,
   ProposalStatus,
 } from "@/lib/supabase/types";
-import { budgetLabel, timeAgo } from "@/lib/supabase/types";
+import {
+  budgetLabel,
+  deadlineLabel,
+  JOB_TYPE_LABELS,
+  timeAgo,
+} from "@/lib/supabase/types";
 
 /** Job detail page: /jobs/[id]. Session read via cookies(), dynamic. */
 export const instant = false;
@@ -40,11 +45,20 @@ async function loadJob(id: string): Promise<JobWithClient | null> {
     title: String(row.title),
     description: String(row.description),
     budget_type: row.budget_type as "fixed" | "hourly",
-    budget_amount: Number(row.budget_amount),
+    budget_amount:
+      row.budget_amount != null ? Number(row.budget_amount) : null,
     skills_required: (row.skills_required as string[] | null) ?? [],
     status: row.status as "open" | "closed" | "in_progress",
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+    company_name: (row.company_name as string | null) ?? null,
+    location: (row.location as string | null) ?? null,
+    apply_url: (row.apply_url as string | null) ?? null,
+    deadline:
+      row.deadline != null ? String(row.deadline).slice(0, 10) : null,
+    job_type: (row.job_type as JobWithClient["job_type"]) ?? null,
+    source_name: (row.source_name as string | null) ?? null,
+    image_url: (row.image_url as string | null) ?? null,
     client_name: (client?.full_name as string | null) ?? null,
     client_avatar: (client?.avatar_url as string | null) ?? null,
     client_headline: (client?.headline as string | null) ?? null,
@@ -144,9 +158,54 @@ export default async function JobDetailPage({ params }: PageProps) {
               <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-ink-900">
                 {job.title}
               </h1>
+
+              {/* Employment job facts (M6) — only shown when the poster added them. */}
+              {(job.company_name || job.location || job.job_type || job.deadline) && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                  {job.company_name && (
+                    <span className="text-base font-extrabold text-ink-900">
+                      {job.company_name}
+                    </span>
+                  )}
+                  {job.location && (
+                    <span className="text-slate-600">📍 {job.location}</span>
+                  )}
+                  {job.job_type && (
+                    <span className="rounded-full bg-brand-500/10 px-3 py-1 text-xs font-bold text-brand-600">
+                      {JOB_TYPE_LABELS[job.job_type]}
+                    </span>
+                  )}
+                  {job.deadline && (
+                    <span className="font-bold text-amber-600">
+                      Apply by {deadlineLabel(job.deadline)}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <p className="mt-2 text-xl font-extrabold text-gradient">
                 {budgetLabel(job.budget_type, job.budget_amount)}
               </p>
+
+              {/* External apply: real employment jobs link out to the employer's
+                  own page. Workbrio does not handle that application. */}
+              {job.apply_url && job.status === "open" && (
+                <div className="mt-5">
+                  <Button
+                    href={job.apply_url}
+                    target="_blank"
+                  >
+                    Apply here ↗
+                  </Button>
+                  <p className="mt-2 text-xs text-slate-500">
+                    You apply on the employer&apos;s website — Workbrio does
+                    not handle this application.
+                    {job.source_name && (
+                      <> Source: {job.source_name}.</>
+                    )}
+                  </p>
+                </div>
+              )}
 
               {/* Save + Share — ease of use */}
               {!isOwner && (
@@ -225,7 +284,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               )}
             </Card>
 
-            {!isOwner && role === "freelancer" && job.status === "open" && (
+            {!isOwner && !job.apply_url && role === "freelancer" && job.status === "open" && (
               <ApplicationForm
                 jobId={job.id}
                 userId={user.id}
@@ -237,7 +296,7 @@ export default async function JobDetailPage({ params }: PageProps) {
             {/* Related jobs — discovery ease */}
             <RelatedJobs jobId={job.id} skills={job.skills_required} />
 
-            {!isOwner && role !== "freelancer" && (
+            {!isOwner && !job.apply_url && role !== "freelancer" && (
               <Card>
                 <p className="text-sm text-slate-600">
                   Only freelancer accounts can apply to jobs. You signed up as
