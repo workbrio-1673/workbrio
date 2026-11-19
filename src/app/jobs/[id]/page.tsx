@@ -1,12 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/site";
 import { AppNavbar } from "@/components/AppNavbar";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import { SkillChip } from "@/components/SkillChip";
 import { ApplicationForm } from "@/components/ApplicationForm";
+import { JobCommentList } from "@/components/JobCommentList";
 import { ReportButton } from "@/components/ReportButton";
 import { SaveJobButton } from "@/components/SaveJobButton";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -16,9 +19,10 @@ import type {
   ProposalStatus,
 } from "@/lib/supabase/types";
 import {
-  budgetLabel,
   deadlineLabel,
+  isJobExpired,
   JOB_TYPE_LABELS,
+  salaryLabel,
   timeAgo,
 } from "@/lib/supabase/types";
 
@@ -59,10 +63,59 @@ async function loadJob(id: string): Promise<JobWithClient | null> {
     job_type: (row.job_type as JobWithClient["job_type"]) ?? null,
     source_name: (row.source_name as string | null) ?? null,
     image_url: (row.image_url as string | null) ?? null,
+    salary_text: (row.salary_text as string | null) ?? null,
     client_name: (client?.full_name as string | null) ?? null,
     client_avatar: (client?.avatar_url as string | null) ?? null,
     client_headline: (client?.headline as string | null) ?? null,
     client_location: (client?.location as string | null) ?? null,
+  };
+}
+
+/** Per-job Open Graph/Twitter tags so a shared job previews as THE JOB
+    (its title, description and image) instead of the generic site card.
+    Runs without a session: jobs are publicly readable, and crawlers
+    (Facebook/WhatsApp) never have one. */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  if (!isSupabaseConfigured()) return {};
+  const job = await loadJob(id);
+  if (!job) return {};
+  const baseTitle = job.company_name
+    ? `${job.title} — ${job.company_name}`
+    : job.title;
+  // Country/place rides along in the preview title when it fits, so a
+  // shared job always says where it is. Long multi-city locations stay
+  // out of the title (they still lead the description below).
+  const locSuffix = job.location ? ` · ${job.location}` : "";
+  const metaTitle =
+    `${baseTitle}${locSuffix}`.length <= 100 ? baseTitle + locSuffix : baseTitle;
+  const cleanDescription = job.description.replace(/\s+/g, " ").trim();
+  const body =
+    cleanDescription.length > 0
+      ? cleanDescription.slice(0, 150)
+      : salaryLabel(job);
+  // Location first, so the place + country shows with the job everywhere.
+  const metaDescription = [job.location, body]
+    .filter(Boolean)
+    .join(" · ");
+  const imageUrl = job.image_url ?? "/logo.png";
+  const pageUrl = `${SITE_URL}/jobs/${job.id}`;
+  return {
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+      url: pageUrl,
+      type: "website",
+      images: [{ url: imageUrl, width: 1200, height: 630, alt: job.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: metaTitle,
+      description: metaDescription,
+      images: [imageUrl],
+    },
   };
 }
 
@@ -88,18 +141,24 @@ export default async function JobDetailPage({ params }: PageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const job = await loadJob(id);
   if (!job) notFound();
 
-  const role = (user.user_metadata?.role as string | undefined) ?? "freelancer";
-  const isOwner = user.id === job.client_id;
+  // Viewing is public (so crawlers and logged-out visitors see the job);
+  // only actions (apply / save / comment / report) need a signed-in user.
+  const role = (user?.user_metadata?.role as string | undefined) ?? "freelancer";
+  const isOwner = user != null && user.id === job.client_id;
+
+  // Auto-expiry: the job stops accepting applications the day after its
+  // deadline, even though its stored status is still "open".
+  const expired = isJobExpired(job);
+  const isOpen = job.status === "open" && !expired;
 
   // Has this freelancer already applied?
   let existingStatus: ProposalStatus | null = null;
   let proposalCount = 0;
-  if (!isOwner && role === "freelancer") {
+  if (user && !isOwner && role === "freelancer") {
     const { data } = await supabase
       .from("proposals")
       .select("status")
@@ -108,12 +167,22 @@ export default async function JobDetailPage({ params }: PageProps) {
       .maybeSingle();
     if (data) existingStatus = data.status as ProposalStatus;
   }
-  if (isOwner) {
+  if (user && isOwner) {
     const { count } = await supabase
       .from("proposals")
       .select("id", { count: "exact", head: true })
       .eq("job_id", id);
     proposalCount = count ?? 0;
+  }
+
+  // Comment count for the job (shown on every open job, own-posted or external).
+  let commentCount = 0;
+  if (user && job.status === "open") {
+    const { count } = await supabase
+      .from("job_comments")
+      .select("id", { count: "exact", head: true })
+      .eq("job_id", id);
+    commentCount = count ?? 0;
   }
 
   const statusLabels: Record<string, string> = {
@@ -140,13 +209,19 @@ export default async function JobDetailPage({ params }: PageProps) {
           <div className="lg:col-span-2">
             <Card>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold capitalize text-emerald-600">
-                  {statusLabels[job.status]}
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${
+                    expired
+                      ? "bg-amber-500/10 text-amber-600"
+                      : "bg-emerald-500/10 text-emerald-600"
+                  }`}
+                >
+                  {expired ? "Expired" : statusLabels[job.status]}
                 </span>
                 <span className="text-sm text-slate-400">
                   Posted {timeAgo(job.created_at)}
                 </span>
-                {!isOwner && (
+                {!isOwner && user && (
                   <ReportButton
                     targetType="job"
                     targetId={job.id}
@@ -177,19 +252,21 @@ export default async function JobDetailPage({ params }: PageProps) {
                   )}
                   {job.deadline && (
                     <span className="font-bold text-amber-600">
-                      Apply by {deadlineLabel(job.deadline)}
+                      {expired
+                        ? `Closed on ${deadlineLabel(job.deadline)}`
+                        : `Apply by ${deadlineLabel(job.deadline)}`}
                     </span>
                   )}
                 </div>
               )}
 
               <p className="mt-2 text-xl font-extrabold text-gradient">
-                {budgetLabel(job.budget_type, job.budget_amount)}
+                {salaryLabel(job)}
               </p>
 
               {/* External apply: real employment jobs link out to the employer's
                   own page. Workbrio does not handle that application. */}
-              {job.apply_url && job.status === "open" && (
+              {job.apply_url && isOpen && (
                 <div className="mt-5">
                   <Button
                     href={job.apply_url}
@@ -210,8 +287,14 @@ export default async function JobDetailPage({ params }: PageProps) {
               {/* Save + Share — ease of use */}
               {!isOwner && (
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <SaveJobButton jobId={job.id} userId={user.id} />
-                  <ShareButtons title={job.title} />
+                  {user ? (
+                    <SaveJobButton jobId={job.id} userId={user.id} />
+                  ) : (
+                    <Button href="/login" variant="secondary" size="sm">
+                      Sign in to save
+                    </Button>
+                  )}
+                  <ShareButtons title={job.title} description={job.description} location={job.location ?? undefined} />
                 </div>
               )}
 
@@ -238,7 +321,9 @@ export default async function JobDetailPage({ params }: PageProps) {
               {isOwner && (
                 <div className="mt-8 flex flex-wrap gap-3 border-t border-slate-100 pt-6">
                   <Button href="/dashboard/proposals" variant="secondary" size="sm">
-                    View {proposalCount} proposal{proposalCount === 1 ? "" : "s"}
+                    View {proposalCount}{" "}
+                    {job.job_type != null ? "application" : "proposal"}
+                    {proposalCount === 1 ? "" : "s"}
                   </Button>
                   <Button href="/dashboard/jobs" variant="ghost" size="sm">
                     Manage my jobs
@@ -246,6 +331,39 @@ export default async function JobDetailPage({ params }: PageProps) {
                 </div>
               )}
             </Card>
+
+            {/* Comments — signed-in users can ask questions about any open job,
+                own-posted or external. */}
+            {isOpen && (
+              <Card>
+                <h2 className="text-lg font-extrabold text-ink-900">
+                  Questions &amp; comments
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Ask about the role, the salary, or how to apply.
+                </p>
+                <div className="mt-3">
+                  {user ? (
+                    <JobCommentList
+                      jobId={job.id}
+                      userId={user.id}
+                      initialCount={commentCount}
+                    />
+                  ) : (
+                    <div>
+                      <p className="text-sm text-slate-600">
+                        Sign in to ask a question or comment on this job.
+                      </p>
+                      <div className="mt-3">
+                        <Button href="/login" variant="secondary" size="sm">
+                          Sign in
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -284,19 +402,34 @@ export default async function JobDetailPage({ params }: PageProps) {
               )}
             </Card>
 
-            {!isOwner && !job.apply_url && role === "freelancer" && job.status === "open" && (
+            {user != null && !isOwner && !job.apply_url && role === "freelancer" && isOpen && (
               <ApplicationForm
                 jobId={job.id}
                 userId={user.id}
                 jobBudgetType={job.budget_type}
                 existingStatus={existingStatus}
+                isEmployment={job.job_type != null}
               />
+            )}
+
+            {/* Logged-out visitors: sign in to apply. */}
+            {user == null && !job.apply_url && isOpen && (
+              <Card>
+                <p className="text-sm text-slate-600">
+                  Sign in to apply to this job.
+                </p>
+                <div className="mt-3">
+                  <Button href="/login" variant="secondary" size="sm">
+                    Sign in to apply
+                  </Button>
+                </div>
+              </Card>
             )}
 
             {/* Related jobs — discovery ease */}
             <RelatedJobs jobId={job.id} skills={job.skills_required} />
 
-            {!isOwner && !job.apply_url && role !== "freelancer" && (
+            {user != null && !isOwner && !job.apply_url && role !== "freelancer" && (
               <Card>
                 <p className="text-sm text-slate-600">
                   Only freelancer accounts can apply to jobs. You signed up as
@@ -305,11 +438,13 @@ export default async function JobDetailPage({ params }: PageProps) {
               </Card>
             )}
 
-            {job.status !== "open" && !isOwner && (
+            {!isOpen && !isOwner && (
               <Card>
                 <p className="text-sm text-slate-600">
-                  This job is {statusLabels[job.status]?.toLowerCase()} and is
-                  no longer accepting proposals.
+                  {expired
+                    ? `This job's last date (${deadlineLabel(job.deadline)}) has passed, so it is no longer accepting applications.`
+                    : `This job is ${statusLabels[job.status]?.toLowerCase()} and is
+                  no longer accepting proposals.`}
                 </p>
               </Card>
             )}
