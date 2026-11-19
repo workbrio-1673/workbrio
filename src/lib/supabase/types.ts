@@ -135,6 +135,11 @@ export type Job = {
   /** M6b: one generic photo for the job card (Unsplash/Pexels hotlink).
       Null = no banner; the card looks exactly as before. */
   image_url: string | null;
+  /** M6c: employer-stated pay as free text, e.g. "£32,073–£39,043 / year".
+      The budget field is a single number and cannot honestly hold a
+      range — that is why ranged jobs showed "Salary not listed".
+      Null = no published pay — shown as "Salary not listed". */
+  salary_text: string | null;
 };
 
 export type Proposal = {
@@ -167,6 +172,10 @@ export type ProposalWithJob = Proposal & {
   job_status: JobStatus | null;
   job_budget_type: BudgetType | null;
   job_budget_amount: number | null;
+  /** M6c: employer-stated pay text, so employment jobs show their range. */
+  job_salary_text: string | null;
+  /** M6: set for own-posted employment jobs — drives "application" wording. */
+  job_type: JobType | null;
   job_id_ref: string;
   client_name: string | null;
 };
@@ -193,6 +202,16 @@ export function budgetLabel(type: BudgetType, amount: number | null): string {
   return type === "hourly" ? `${formatted}/hr` : `${formatted} fixed`;
 }
 
+/** The pay to show for a job: the employer-stated range as text when
+    present ("£32,073–£39,043 / year"), else the numeric budget label. */
+export function salaryLabel(
+  job: Pick<Job, "salary_text" | "budget_type" | "budget_amount">
+): string {
+  const text = job.salary_text?.trim();
+  if (text) return text;
+  return budgetLabel(job.budget_type, job.budget_amount);
+}
+
 /** "12 Dec 2026" for a YYYY-MM-DD deadline (UTC-safe, no timezone shift). */
 export function deadlineLabel(iso: string | null): string | null {
   if (!iso) return null;
@@ -206,6 +225,17 @@ export function deadlineLabel(iso: string | null): string | null {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+/** Today as YYYY-MM-DD (UTC), for deadline comparisons. */
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** True when a job's last date has passed. A job is still live ON its
+    deadline day; it expires the day after. Null deadline = never expires. */
+export function isJobExpired(job: { deadline: string | null }): boolean {
+  return job.deadline != null && job.deadline < todayISO();
 }
 
 /* ---------------- M3: Feed ---------------- */
@@ -237,6 +267,21 @@ export type Comment = {
 };
 
 export type CommentWithAuthor = Comment & {
+  author_name: string | null;
+  author_avatar: string | null;
+};
+
+/* ---------------- M6e: Job comments ---------------- */
+
+export type JobComment = {
+  id: string;
+  job_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+};
+
+export type JobCommentWithAuthor = JobComment & {
   author_name: string | null;
   author_avatar: string | null;
 };

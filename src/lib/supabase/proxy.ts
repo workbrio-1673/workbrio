@@ -69,7 +69,15 @@ export async function updateSession(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
 
-  if (!user && isProtected) {
+  // Public detail pages: a single /jobs/<id> or /services/<id> is viewable
+  // without signing in, so the page (and its Open Graph tags) reach
+  // logged-out visitors and link-preview crawlers (Facebook/WhatsApp).
+  // /jobs (the list) and /jobs/new stay protected, as do /services/new.
+  const isPublicDetail =
+    (/^\/jobs\/[^/]+$/.test(pathname) && pathname !== "/jobs/new") ||
+    (/^\/services\/[^/]+$/.test(pathname) && pathname !== "/services/new");
+
+  if (!user && isProtected && !isPublicDetail) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
