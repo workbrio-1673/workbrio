@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
 import type { ProposalStatus, ProposalWithJob } from "@/lib/supabase/types";
-import { budgetLabel } from "@/lib/supabase/types";
+import { salaryLabel } from "@/lib/supabase/types";
 
 const STATUS_STYLES: Record<ProposalStatus, string> = {
   pending: "bg-amber-500/10 text-amber-600",
@@ -25,8 +25,8 @@ export function ApplicationsList({
   const [items, setItems] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const withdraw = async (id: string) => {
-    if (!window.confirm("Withdraw this proposal?")) return;
+  const withdraw = async (id: string, isEmployment: boolean) => {
+    if (!window.confirm(`Withdraw this ${isEmployment ? "application" : "proposal"}?`)) return;
     setBusyId(id);
     try {
       const supabase = createClient();
@@ -78,9 +78,11 @@ export function ApplicationsList({
                 </span>
               </div>
               <p className="mt-1 text-sm text-slate-500">
-                {p.job_budget_type && p.job_budget_amount != null
-                  ? budgetLabel(p.job_budget_type, p.job_budget_amount)
-                  : "Budget not shown"}{" "}
+                {salaryLabel({
+                  salary_text: p.job_salary_text ?? null,
+                  budget_type: p.job_budget_type ?? "fixed",
+                  budget_amount: p.job_budget_amount,
+                })}{" "}
                 · {p.client_name ?? "Client"} · applied{" "}
                 {new Date(p.created_at).toLocaleDateString("en-US")}
                 {p.bid_amount != null && (
@@ -108,7 +110,7 @@ export function ApplicationsList({
                 size="sm"
                 variant="ghost"
                 disabled={busyId === p.id}
-                onClick={() => withdraw(p.id)}
+                onClick={() => withdraw(p.id, p.job_type != null)}
               >
                 Withdraw
               </Button>

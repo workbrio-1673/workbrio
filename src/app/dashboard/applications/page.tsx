@@ -32,7 +32,7 @@ export default async function ApplicationsPage() {
   const { data } = await supabase
     .from("proposals")
     .select(
-      "*, job:job_id(title, status, budget_type, budget_amount, client:client_id(full_name))"
+      "*, job:job_id(title, status, budget_type, budget_amount, salary_text, job_type, client:client_id(full_name))"
     )
     .eq("freelancer_id", user.id)
     .order("created_at", { ascending: false });
@@ -54,6 +54,8 @@ export default async function ApplicationsPage() {
         job_status: (job?.status as "open" | "closed" | "in_progress" | null) ?? null,
         job_budget_type: (job?.budget_type as "fixed" | "hourly" | null) ?? null,
         job_budget_amount: job?.budget_amount != null ? Number(job.budget_amount) : null,
+        job_salary_text: (job?.salary_text as string | null) ?? null,
+        job_type: (job?.job_type as ProposalWithJob["job_type"]) ?? null,
         job_id_ref: String(p.job_id),
         client_name: (client?.full_name as string | null) ?? null,
       };
