@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "dark";
+type Variant = "primary" | "pine" | "secondary" | "ghost" | "dark";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
     "bg-gradient-brand text-white shadow-lg shadow-flare-500/25 hover:shadow-xl hover:shadow-flare-500/30 hover:brightness-110",
+  /** Homepage green (mockup style) — pine green, no gradient. */
+  pine: "bg-pine-600 text-white shadow-lg shadow-pine-600/25 hover:bg-pine-700 hover:shadow-xl",
   secondary:
     "bg-white text-ink-900 card-ring hover:border-brand-500 hover:text-brand-600",
   ghost: "text-ink-700 hover:bg-slate-100",
