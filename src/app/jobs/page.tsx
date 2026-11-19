@@ -9,6 +9,7 @@ import { JobCard } from "@/components/JobCard";
 import { JobFilters } from "@/components/JobFilters";
 import { JobsHeader } from "@/components/JobsHeader";
 import type { JobWithClient, Skill } from "@/lib/supabase/types";
+import { todayISO } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
   title: "Browse Jobs",
@@ -54,6 +55,7 @@ function mapJob(row: Record<string, unknown>): JobWithClient {
     job_type: (row.job_type as JobWithClient["job_type"]) ?? null,
     source_name: (row.source_name as string | null) ?? null,
     image_url: (row.image_url as string | null) ?? null,
+    salary_text: (row.salary_text as string | null) ?? null,
     client_name: (client?.full_name as string | null) ?? null,
     client_avatar: (client?.avatar_url as string | null) ?? null,
     client_headline: (client?.headline as string | null) ?? null,
@@ -68,6 +70,10 @@ async function loadJobs(params: SearchParams): Promise<JobWithClient[]> {
     .from("jobs")
     .select("*, client:client_id(full_name, avatar_url, headline, location)")
     .eq("status", "open")
+    // Auto-expiry: a job vanishes from the board the day after its
+    // deadline. No deadline = never expires. No cron needed — the
+    // date comparison does it on every load.
+    .or(`deadline.is.null,deadline.gte.${todayISO()}`)
     .order("created_at", { ascending: false })
     .limit(100);
 
