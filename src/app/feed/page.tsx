@@ -7,6 +7,7 @@ import { FeedList } from "@/components/FeedList";
 import { FeedProfileCard } from "@/components/FeedProfileCard";
 import { FeedRightRail } from "@/components/FeedRightRail";
 import type { PostWithAuthor } from "@/lib/supabase/types";
+import { todayISO } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
   title: "Community Feed",
@@ -152,8 +153,10 @@ export default async function FeedPage() {
       .limit(3),
     supabase
       .from("jobs")
-      .select("id, title, budget_type, budget_amount")
+      .select("id, title, budget_type, budget_amount, salary_text")
       .eq("status", "open")
+      // Auto-expiry: the feed rail never shows a job past its deadline.
+      .or(`deadline.is.null,deadline.gte.${todayISO()}`)
       .order("created_at", { ascending: false })
       .limit(3),
   ]);
@@ -211,6 +214,7 @@ export default async function FeedPage() {
                   budget_type: j.budget_type as "fixed" | "hourly",
                   budget_amount:
                     j.budget_amount != null ? Number(j.budget_amount) : null,
+                  salary_text: (j.salary_text as string | null) ?? null,
                 }))}
               />
             </div>
