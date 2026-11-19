@@ -8,7 +8,7 @@ import { Button } from "@/components/Button";
 import { SkillChip } from "@/components/SkillChip";
 import { JobForm } from "@/components/JobForm";
 import type { Job, JobStatus, Skill } from "@/lib/supabase/types";
-import { budgetLabel, timeAgo } from "@/lib/supabase/types";
+import { salaryLabel, timeAgo } from "@/lib/supabase/types";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   open: "Open",
@@ -135,7 +135,7 @@ export function MyJobsList({
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-slate-500">
-                  {budgetLabel(job.budget_type, job.budget_amount)} · posted{" "}
+                  {salaryLabel(job)} · posted{" "}
                   {timeAgo(job.created_at)}
                 </p>
                 {(job.company_name || job.location || job.job_type) && (
