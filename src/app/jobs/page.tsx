@@ -10,6 +10,7 @@ import { JobFilters } from "@/components/JobFilters";
 import { JobsHeader } from "@/components/JobsHeader";
 import type { JobWithClient, Skill } from "@/lib/supabase/types";
 import { todayISO } from "@/lib/supabase/types";
+import { mapJobRow, splitJobs } from "@/lib/jobs";
 
 export const metadata: Metadata = {
   title: "Browse Jobs",
@@ -32,36 +33,6 @@ type SearchParams = {
 type PageProps = {
   searchParams: Promise<SearchParams>;
 };
-
-function mapJob(row: Record<string, unknown>): JobWithClient {
-  const client = (row.client as Record<string, unknown> | null) ?? null;
-  return {
-    id: String(row.id),
-    client_id: String(row.client_id),
-    title: String(row.title),
-    description: String(row.description),
-    budget_type: row.budget_type as "fixed" | "hourly",
-    budget_amount:
-      row.budget_amount != null ? Number(row.budget_amount) : null,
-    skills_required: (row.skills_required as string[] | null) ?? [],
-    status: row.status as "open" | "closed" | "in_progress",
-    created_at: String(row.created_at),
-    updated_at: String(row.updated_at),
-    company_name: (row.company_name as string | null) ?? null,
-    location: (row.location as string | null) ?? null,
-    apply_url: (row.apply_url as string | null) ?? null,
-    deadline:
-      row.deadline != null ? String(row.deadline).slice(0, 10) : null,
-    job_type: (row.job_type as JobWithClient["job_type"]) ?? null,
-    source_name: (row.source_name as string | null) ?? null,
-    image_url: (row.image_url as string | null) ?? null,
-    salary_text: (row.salary_text as string | null) ?? null,
-    client_name: (client?.full_name as string | null) ?? null,
-    client_avatar: (client?.avatar_url as string | null) ?? null,
-    client_headline: (client?.headline as string | null) ?? null,
-    client_location: (client?.location as string | null) ?? null,
-  };
-}
 
 async function loadJobs(params: SearchParams): Promise<JobWithClient[]> {
   const supabase = await createClient();
@@ -98,7 +69,42 @@ async function loadJobs(params: SearchParams): Promise<JobWithClient[]> {
     return [];
   }
   return (data ?? []).map((row) =>
-    mapJob(row as unknown as Record<string, unknown>)
+    mapJobRow(row as unknown as Record<string, unknown>)
+  );
+}
+
+/** One of the two jobs sections: Pakistani jobs or International jobs. */
+function JobSection({
+  title,
+  jobs,
+  emptyText,
+}: {
+  title: string;
+  jobs: JobWithClient[];
+  emptyText: string;
+}) {
+  return (
+    <section className="mt-10">
+      <div className="flex flex-wrap items-baseline gap-3">
+        <h2 className="text-2xl font-extrabold tracking-tight text-ink-900">
+          {title}
+        </h2>
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+          {jobs.length} {jobs.length === 1 ? "job" : "jobs"}
+        </span>
+      </div>
+      {jobs.length > 0 ? (
+        <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {jobs.map((job) => (
+            <JobCard key={job.id} job={job} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-8 text-center text-sm text-slate-500">
+          {emptyText}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -138,6 +144,10 @@ export default async function JobsPage({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
   const role = (user?.user_metadata?.role as string | undefined) ?? "freelancer";
 
+  // Two sections: Pakistani jobs and International jobs. The search and
+  // filters above already narrowed the list; the split only groups it.
+  const { pakistani, international } = splitJobs(jobs);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <AppNavbar />
@@ -158,11 +168,18 @@ export default async function JobsPage({ searchParams }: PageProps) {
         </div>
 
         {jobs.length > 0 ? (
-          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          <>
+            <JobSection
+              title="🇵🇰 Pakistani Jobs"
+              jobs={pakistani}
+              emptyText="No Pakistani jobs match your search right now — try clearing the filters."
+            />
+            <JobSection
+              title="🌍 International Jobs"
+              jobs={international}
+              emptyText="No international jobs match your search right now — try clearing the filters."
+            />
+          </>
         ) : (
           <Card className="mt-8 text-center">
             <p className="text-4xl">🔍</p>
