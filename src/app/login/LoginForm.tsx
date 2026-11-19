@@ -97,15 +97,14 @@ export function LoginForm() {
 
       <GoogleButton />
 
-      <p className="mt-8 text-center text-sm text-slate-600">
-        {t("auth.noAccount")}{" "}
-        <Link
-          href="/signup"
-          className="font-semibold text-brand-600 hover:text-brand-500"
-        >
+      <div className="mt-6">
+        <Button href="/signup" variant="secondary" className="w-full">
           {t("auth.createAccount")}
-        </Link>
-      </p>
+        </Button>
+        <p className="mt-3 text-center text-sm text-slate-600">
+          {t("auth.noAccount")}
+        </p>
+      </div>
     </>
   );
 }
