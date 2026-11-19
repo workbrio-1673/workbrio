@@ -7,6 +7,7 @@ import { Card } from "./Card";
 import { LikeButton } from "./LikeButton";
 import { CommentList } from "./CommentList";
 import { SaveButton } from "./SaveButton";
+import { ShareButtons } from "./ShareButtons";
 import { ReportButton } from "./ReportButton";
 import { timeAgo, type PostWithAuthor } from "@/lib/supabase/types";
 
@@ -144,6 +145,17 @@ export function PostCard({ post, userId, onDeleted }: PostCardProps) {
           onCountChange={setCommentCount}
         />
         <SaveButton postId={post.id} userId={userId} />
+        <span className="ml-auto">
+          <ShareButtons
+            url="/feed"
+            message={`Check out this post on Workbrio: ${
+              post.content.length > 100
+                ? `${post.content.slice(0, 100).trim()}…`
+                : post.content
+            }`}
+            compact
+          />
+        </span>
       </div>
     </Card>
   );

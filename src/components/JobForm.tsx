@@ -38,6 +38,9 @@ export function JobForm({
   const [budgetAmount, setBudgetAmount] = useState(
     initialJob?.budget_amount != null ? String(initialJob.budget_amount) : ""
   );
+  /* M6c: employer-stated pay as free text (a range a single number can't
+     hold). Optional — empty stays null and the job shows "Salary not listed". */
+  const [salaryText, setSalaryText] = useState(initialJob?.salary_text ?? "");
   /* M6 job-board fields — all optional; empty for classic freelance gigs. */
   const [company, setCompany] = useState(initialJob?.company_name ?? "");
   const [location, setLocation] = useState(initialJob?.location ?? "");
@@ -87,6 +90,7 @@ export function JobForm({
        it shows as "Salary not listed", never an invented number. */
     const budgetText = budgetAmount.trim();
     const amount = budgetText === "" ? null : Number(budgetText);
+    const cleanSalaryText = salaryText.trim();
     if (cleanTitle.length < 8) {
       setError("Please give your job a clear title (at least 8 characters).");
       return;
@@ -116,6 +120,7 @@ export function JobForm({
         description: cleanDescription,
         budget_type: budgetType,
         budget_amount: amount,
+        salary_text: cleanSalaryText === "" ? null : cleanSalaryText,
         skills_required: skills,
         company_name: cleanCompany === "" ? null : cleanCompany,
         location: cleanLocation === "" ? null : cleanLocation,
@@ -299,6 +304,18 @@ export function JobForm({
       <p className="-mt-2 text-xs text-slate-500">
         Leave the budget blank when the pay is not published — the job will
         show “Salary not listed”.
+      </p>
+
+      <Input
+        label="Salary (as stated, e.g. £32,073–£39,043 / year) — optional"
+        placeholder="Copy the pay exactly as the employer states it"
+        value={salaryText}
+        onChange={(e) => setSalaryText(e.target.value)}
+        maxLength={120}
+      />
+      <p className="-mt-2 text-xs text-slate-500">
+        Use this when the pay is a range or in another currency — a single
+        number can&apos;t hold it. Leave blank when no pay is published.
       </p>
 
       <div>

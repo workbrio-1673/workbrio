@@ -8,17 +8,21 @@ import { Button } from "./Button";
 import { Card } from "./Card";
 import type { BudgetType, ProposalStatus } from "@/lib/supabase/types";
 
-/** Freelancer applies to a job: cover note + bid. */
+/** Freelancer applies to a job: cover note + bid (gig jobs) or cover note +
+    CV only (employment jobs — a salaried applicant does not bid). */
 export function ApplicationForm({
   jobId,
   userId,
   jobBudgetType,
   existingStatus,
+  isEmployment = false,
 }: {
   jobId: string;
   userId: string;
   jobBudgetType: BudgetType;
   existingStatus: ProposalStatus | null;
+  /** Own-posted employment job (M6 job_type set, no apply_url). */
+  isEmployment?: boolean;
 }) {
   const router = useRouter();
   const [coverNote, setCoverNote] = useState("");
@@ -28,10 +32,11 @@ export function ApplicationForm({
   const [error, setError] = useState<string | null>(null);
 
   if (existingStatus) {
+    const noun = isEmployment ? "application" : "proposal";
     const messages: Record<ProposalStatus, string> = {
       pending: "You already applied to this job. The client hasn't responded yet.",
-      accepted: "Congratulations! The client accepted your proposal for this job.",
-      declined: "The client declined your proposal for this job.",
+      accepted: `Congratulations! The client accepted your ${noun} for this job.`,
+      declined: `The client declined your ${noun} for this job.`,
     };
     return (
       <Card className="border-brand-500/30 bg-gradient-to-r from-brand-500/5 via-grape-500/5 to-flare-500/5">
@@ -44,7 +49,12 @@ export function ApplicationForm({
 
   const submit = async () => {
     setError(null);
-    const amount = bid.trim() === "" ? null : Number(bid);
+    // Employment jobs have no bid — the salary is already on the job.
+    const amount = isEmployment
+      ? null
+      : bid.trim() === ""
+        ? null
+        : Number(bid);
     if (amount !== null && (!Number.isFinite(amount) || amount <= 0)) {
       setError("Please enter a valid bid amount, or leave it empty.");
       return;
@@ -113,19 +123,22 @@ export function ApplicationForm({
             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[0.95rem] text-ink-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
           />
         </div>
-        <Input
-          label={
-            jobBudgetType === "hourly"
-              ? "Your hourly rate (USD, optional)"
-              : "Your bid (USD, optional)"
-          }
-          type="number"
-          min="1"
-          step="any"
-          placeholder="e.g. 450"
-          value={bid}
-          onChange={(e) => setBid(e.target.value)}
-        />
+        {/* No bid on employment jobs: cover note + CV is the application. */}
+        {!isEmployment && (
+          <Input
+            label={
+              jobBudgetType === "hourly"
+                ? "Your hourly rate (USD, optional)"
+                : "Your bid (USD, optional)"
+            }
+            type="number"
+            min="1"
+            step="any"
+            placeholder="e.g. 450"
+            value={bid}
+            onChange={(e) => setBid(e.target.value)}
+          />
+        )}
         <div>
           <label
             htmlFor="apply-cv"
@@ -152,7 +165,11 @@ export function ApplicationForm({
           </p>
         )}
         <Button onClick={submit} disabled={sending}>
-          {sending ? "Sending…" : "Send proposal"}
+          {sending
+            ? "Sending…"
+            : isEmployment
+              ? "Send application"
+              : "Send proposal"}
         </Button>
       </div>
     </Card>

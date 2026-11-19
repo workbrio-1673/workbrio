@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "./Card";
-import { budgetLabel } from "@/lib/supabase/types";
+import { salaryLabel } from "@/lib/supabase/types";
 
 type SavedJobRow = {
   job_id: string;
@@ -13,6 +13,7 @@ type SavedJobRow = {
     title: string;
     budget_type: "fixed" | "hourly";
     budget_amount: number | null;
+    salary_text: string | null;
   } | null;
 };
 
@@ -25,7 +26,7 @@ export function SavedJobsList({ userId }: { userId: string }) {
     const supabase = createClient();
     supabase
       .from("saved_jobs")
-      .select("job_id, job:job_id(id, title, budget_type, budget_amount)")
+      .select("job_id, job:job_id(id, title, budget_type, budget_amount, salary_text)")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -64,7 +65,7 @@ export function SavedJobsList({ userId }: { userId: string }) {
               <Card hover className="p-4">
                 <p className="font-bold text-ink-900">{j.title}</p>
                 <p className="mt-1 text-sm font-bold text-emerald-600">
-                  {budgetLabel(j.budget_type, j.budget_amount)}
+                  {salaryLabel(j)}
                 </p>
               </Card>
             </Link>

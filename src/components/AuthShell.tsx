@@ -41,8 +41,9 @@ export function AuthShell({
         </div>
       </div>
 
-      {/* Form side */}
-      <div className="flex w-full items-center justify-center px-4 py-12 lg:w-1/2">
+      {/* Form side — extra bottom padding on mobile so the fixed
+          "Powered by Netlify" badge never covers the bottom content. */}
+      <div className="flex w-full items-center justify-center px-4 pb-24 pt-12 lg:w-1/2 lg:py-12">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
             <Logo />

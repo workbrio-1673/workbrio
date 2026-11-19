@@ -4,13 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Card } from "./Card";
-import { budgetLabel } from "@/lib/supabase/types";
+import { salaryLabel, todayISO } from "@/lib/supabase/types";
 
 type RelatedJob = {
   id: string;
   title: string;
   budget_type: "fixed" | "hourly";
   budget_amount: number | null;
+  salary_text: string | null;
   skills_required: string[];
 };
 
@@ -29,9 +30,11 @@ export function RelatedJobs({
     const supabase = createClient();
     supabase
       .from("jobs")
-      .select("id, title, budget_type, budget_amount, skills_required")
+      .select("id, title, budget_type, budget_amount, salary_text, skills_required")
       .eq("status", "open")
       .neq("id", jobId)
+      // Auto-expiry: never suggest a job whose deadline has passed.
+      .or(`deadline.is.null,deadline.gte.${todayISO()}`)
       .overlaps("skills_required", skills)
       .order("created_at", { ascending: false })
       .limit(4)
@@ -54,7 +57,7 @@ export function RelatedJobs({
           >
             <p className="font-bold text-ink-900 line-clamp-1">{j.title}</p>
             <p className="mt-1 text-xs font-bold text-emerald-600">
-              {budgetLabel(j.budget_type, j.budget_amount)}
+              {salaryLabel(j)}
             </p>
           </Link>
         ))}

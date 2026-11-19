@@ -74,13 +74,15 @@ type ProposalListProps = {
   jobId: string;
   jobTitle: string;
   proposals: ProposalWithFreelancer[];
+  /** Own-posted employment job — applicants, not freelance proposals. */
+  isEmployment?: boolean;
 };
 
 /**
  * Client's applicant inbox for one job.
  * Accepting sets the job to in_progress and declines the other proposals.
  */
-export function ProposalList({ jobId, jobTitle, proposals }: ProposalListProps) {
+export function ProposalList({ jobId, jobTitle, proposals, isEmployment = false }: ProposalListProps) {
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -170,18 +172,23 @@ export function ProposalList({ jobId, jobTitle, proposals }: ProposalListProps) 
       <Card>
         <h3 className="font-extrabold text-ink-900">{jobTitle}</h3>
         <p className="mt-2 text-sm text-slate-500">
-          No proposals yet. Freelancers will appear here when they apply.
+          {isEmployment
+            ? "No applications yet. Applicants will appear here when they apply."
+            : "No proposals yet. Freelancers will appear here when they apply."}
         </p>
       </Card>
     );
   }
+
+  const noun = isEmployment ? "application" : "proposal";
 
   return (
     <Card>
       <div className="flex items-center justify-between">
         <h3 className="font-extrabold text-ink-900">{jobTitle}</h3>
         <span className="text-sm text-slate-500">
-          {proposals.length} proposal{proposals.length === 1 ? "" : "s"}
+          {proposals.length} {noun}
+          {proposals.length === 1 ? "" : "s"}
         </span>
       </div>
 

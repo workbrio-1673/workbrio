@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
+import { salaryLabel } from "@/lib/supabase/types";
 
 export type SuggestedProfile = {
   id: string;
@@ -15,6 +16,7 @@ export type TrendingJob = {
   title: string;
   budget_type: "fixed" | "hourly";
   budget_amount: number | null;
+  salary_text: string | null;
 };
 
 /** Right rail on /feed — suggested people + trending jobs for easy discovery. */
@@ -95,15 +97,7 @@ export function FeedRightRail({
                 {j.title}
               </p>
               <p className="text-xs text-slate-500">
-                {j.budget_amount != null ? (
-                  <>
-                    {j.budget_type === "hourly" ? t("jobs.hourly") : t("jobs.fixed")} · $
-                    {Number(j.budget_amount).toLocaleString()}
-                    {j.budget_type === "hourly" ? "/hr" : ""}
-                  </>
-                ) : (
-                  "Salary not listed"
-                )}
+                {salaryLabel(j)}
               </p>
             </Link>
           ))}

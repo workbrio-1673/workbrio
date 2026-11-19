@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Card } from "./Card";
+import { ShareButtons } from "./ShareButtons";
 import { SkillChip } from "./SkillChip";
 import type { JobWithClient } from "@/lib/supabase/types";
 import {
-  budgetLabel,
   deadlineLabel,
   JOB_TYPE_LABELS,
+  salaryLabel,
   timeAgo,
 } from "@/lib/supabase/types";
 
@@ -106,10 +107,14 @@ export function JobCard({ job }: { job: JobWithClient }) {
           </div>
           <div className="text-right">
             <p className="text-base font-extrabold text-ink-900">
-              {budgetLabel(job.budget_type, job.budget_amount)}
+              {salaryLabel(job)}
             </p>
             <p className="text-xs text-slate-400">{timeAgo(job.created_at)}</p>
           </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-end">
+          <ShareButtons title={job.title} url={`/jobs/${job.id}`} description={job.description} location={job.location ?? undefined} compact />
         </div>
       </Card>
     </Link>
