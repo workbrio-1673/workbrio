@@ -6,6 +6,8 @@ import { LANG_COOKIE, detectLang, isLangCode } from "@/lib/i18n/languages";
  * Refreshes the Supabase auth session on every request and enforces
  * the protected-route rules for M0/M1:
  *  - Signed-out visitors to /dashboard* /settings* (and future app routes) → /login
+ *  - /jobs (the list) is PUBLIC: anyone can browse jobs; only /jobs/new
+ *    (posting) and applying need sign-in
  *  - /profile/[id] stays PUBLIC so profiles can be shared
  *  - Signed-in users visiting /login or /signup → /dashboard
  */
@@ -65,19 +67,23 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password");
-  const isProtected = ["/dashboard", "/settings", "/feed", "/jobs", "/messages", "/notifications"].some(
+  const isProtected = ["/dashboard", "/settings", "/feed", "/messages", "/notifications"].some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   );
+  // /jobs/new stays protected (posting a job needs sign-in) even though
+  // the /jobs list itself is public.
+  const isProtectedJobRoute = pathname === "/jobs/new";
 
   // Public detail pages: a single /jobs/<id> or /services/<id> is viewable
   // without signing in, so the page (and its Open Graph tags) reach
   // logged-out visitors and link-preview crawlers (Facebook/WhatsApp).
-  // /jobs (the list) and /jobs/new stay protected, as do /services/new.
+  // The /jobs list itself is public too; only /jobs/new stays protected,
+  // as does /services/new.
   const isPublicDetail =
     (/^\/jobs\/[^/]+$/.test(pathname) && pathname !== "/jobs/new") ||
     (/^\/services\/[^/]+$/.test(pathname) && pathname !== "/services/new");
 
-  if (!user && isProtected && !isPublicDetail) {
+  if (!user && (isProtected || isProtectedJobRoute) && !isPublicDetail) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
