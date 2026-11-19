@@ -1,19 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Footer } from "@/components/Footer";
 import { Navbar } from "@/components/Navbar";
+import { JobCard } from "@/components/JobCard";
 import { useLanguage } from "@/components/LanguageProvider";
-const STATS = [
-  { value: "100%", label: "Free forever" },
-  { value: "10", label: "Languages" },
-  { value: "0%", label: "Commission" },
-  { value: "14+", label: "Members & growing" },
-];
+import type { JobWithClient } from "@/lib/supabase/types";
 
 /** Fiverr-style popular service categories → job search. */
 const POPULAR_CATEGORIES = [
@@ -45,33 +40,6 @@ const FEATURES = [
     icon: "💬",
     title: "Realtime Messaging",
     text: "Chat one-to-one with clients or freelancers, tied to each job. No lost emails, no missed DMs.",
-  },
-];
-
-const JOBS = [
-  {
-    title: "Mobile App UI Design",
-    budget: "$1,200",
-    type: "Fixed price",
-    skills: ["Figma", "UI Design", "Mobile"],
-  },
-  {
-    title: "React Admin Dashboard",
-    budget: "$2,500",
-    type: "Fixed price",
-    skills: ["React", "TypeScript", "Dashboards"],
-  },
-  {
-    title: "Blog Articles (10x)",
-    budget: "$350",
-    type: "Fixed price",
-    skills: ["Writing", "SEO", "Research"],
-  },
-  {
-    title: "Logo & Brand Identity",
-    budget: "$800",
-    type: "Fixed price",
-    skills: ["Branding", "Illustrator", "Logo"],
   },
 ];
 
@@ -166,9 +134,34 @@ const FAQS = [
   },
 ];
 
-export function LandingContent() {
+export function LandingContent({
+  latestPakistani,
+  latestInternational,
+  openJobsCount,
+  memberCount,
+}: {
+  /** Latest live jobs, already split. Empty when Supabase is unreachable. */
+  latestPakistani: JobWithClient[];
+  latestInternational: JobWithClient[];
+  /** Real live counts for the hero stats. Zero = do not show that stat. */
+  openJobsCount: number;
+  memberCount: number;
+}) {
   const { t } = useLanguage();
   const [howAud, setHowAud] = useState<"client" | "freelancer">("client");
+
+  // Hero stats: live counts first (only when we truly know them),
+  // then the two policy facts that are always true.
+  const stats = [
+    ...(openJobsCount > 0
+      ? [{ value: String(openJobsCount), label: "Open jobs" }]
+      : []),
+    ...(memberCount > 0
+      ? [{ value: String(memberCount), label: "Members" }]
+      : []),
+    { value: "100%", label: "Free forever" },
+    { value: "0%", label: "Commission" },
+  ];
   return (
     <>
       <Navbar />
@@ -199,8 +192,8 @@ export function LandingContent() {
             {t("hero.freeBadge")}
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button href="/signup" size="lg">
-              {t("hero.findWork")}
+            <Button href="/jobs" size="lg">
+              {t("feed.browseJobs")}
             </Button>
             <Button
               href="/signup"
@@ -208,11 +201,11 @@ export function LandingContent() {
               variant="secondary"
               className="border-white/20 bg-white/10 text-white hover:border-white/40 hover:text-white"
             >
-              Hire Talent
+              {t("auth.createAccount")}
             </Button>
           </div>
           <dl className="mx-auto mt-16 grid max-w-3xl grid-cols-2 gap-6 sm:grid-cols-4">
-            {STATS.map((s) => (
+            {stats.map((s) => (
               <div key={s.label}>
                 <dd className="text-3xl font-extrabold text-white">{s.value}</dd>
                 <dt className="mt-1 text-sm text-slate-400">{s.label}</dt>
@@ -224,6 +217,65 @@ export function LandingContent() {
           className="relative h-16 bg-gradient-to-b from-transparent to-white"
           aria-hidden
         />
+      </section>
+
+      {/* ————— LATEST JOBS (real, live — no sample jobs) ————— */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-bold uppercase tracking-widest text-flare-600">
+              Fresh jobs, updated daily
+            </p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink-900 sm:text-4xl">
+              Latest jobs
+            </h2>
+            <p className="mt-3 text-slate-600">
+              Real jobs from Pakistan and around the world — new ones added
+              every day.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-10 lg:grid-cols-2">
+            <div>
+              <h3 className="text-xl font-extrabold text-ink-900">
+                🇵🇰 Pakistani Jobs
+              </h3>
+              {latestPakistani.length > 0 ? (
+                <div className="mt-5 space-y-4">
+                  {latestPakistani.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">
+                  No Pakistani jobs right now — check back soon.
+                </p>
+              )}
+            </div>
+            <div>
+              <h3 className="text-xl font-extrabold text-ink-900">
+                🌍 International Jobs
+              </h3>
+              {latestInternational.length > 0 ? (
+                <div className="mt-5 space-y-4">
+                  {latestInternational.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">
+                  No international jobs right now — check back soon.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-10 text-center">
+            <Button href="/jobs" size="lg">
+              {t("feed.browseJobs")}
+            </Button>
+          </div>
+        </div>
       </section>
 
       {/* ————— POPULAR CATEGORIES (Fiverr-style) ————— */}
@@ -279,96 +331,6 @@ export function LandingContent() {
                 </p>
               </Card>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ————— SAMPLE PROFILE + JOBS ————— */}
-      <section className="bg-slate-50 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-flare-600">
-              A taste of Workbrio
-            </p>
-            <h2 className="mt-3 text-4xl font-extrabold tracking-tight text-ink-900">
-              Talent meets opportunity
-            </h2>
-          </div>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-5">
-            {/* Sample freelancer profile — clearly labeled as demo */}
-            <Card className="relative lg:col-span-2">
-              <span className="absolute right-4 top-4 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
-                Sample
-              </span>
-              <div className="flex items-start gap-4">
-                <Image
-                  src="/avatar-sample.jpg"
-                  alt="Sample freelancer avatar"
-                  width={72}
-                  height={72}
-                  className="rounded-2xl object-cover"
-                />
-                <div>
-                  <h3 className="text-xl font-bold text-ink-900">Maya Chen</h3>
-                  <p className="text-sm text-slate-600">
-                    UI/UX Designer &amp; Brand Specialist · Berlin, Germany
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-amber-500">
-                    ★ 4.9{" "}
-                    <span className="font-normal text-slate-500">
-                      (212 reviews)
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Figma", "UI Design", "Branding", "Prototyping"].map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-ink-700"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <p className="text-sm text-slate-500">
-                  <span className="text-lg font-extrabold text-ink-900">
-                    $45
-                  </span>
-                  /hr
-                </p>
-                <Button size="sm">View Profile</Button>
-              </div>
-            </Card>
-
-            {/* Sample jobs */}
-            <div className="space-y-4 lg:col-span-3">
-              {JOBS.map((j) => (
-                <Card key={j.title} hover className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-bold text-ink-900">{j.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500">{j.type}</p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {j.skills.map((s) => (
-                          <span
-                            key={s}
-                            className="rounded-full bg-brand-500/10 px-2.5 py-0.5 text-xs font-semibold text-brand-600"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-sm font-extrabold text-emerald-600">
-                      {j.budget}
-                    </span>
-                  </div>
-                </Card>
-              ))}
-            </div>
           </div>
         </div>
       </section>
