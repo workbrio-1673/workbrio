@@ -265,8 +265,10 @@ export default async function JobDetailPage({ params }: PageProps) {
               </p>
 
               {/* External apply: real employment jobs link out to the employer's
-                  own page. Workbrio does not handle that application. */}
-              {job.apply_url && isOpen && (
+                  own page. Workbrio does not handle that application.
+                  Like every apply path, the link is only shown once signed
+                  in — logged-out visitors are asked to sign in first. */}
+              {job.apply_url && isOpen && user != null && (
                 <div className="mt-5">
                   <Button
                     href={job.apply_url}
@@ -412,14 +414,19 @@ export default async function JobDetailPage({ params }: PageProps) {
               />
             )}
 
-            {/* Logged-out visitors: sign in to apply. */}
-            {user == null && !job.apply_url && isOpen && (
+            {/* Logged-out visitors: sign in to apply. After signing in they
+                come back to this job (next=) so they can apply right away. */}
+            {user == null && isOpen && (
               <Card>
                 <p className="text-sm text-slate-600">
                   Sign in to apply to this job.
                 </p>
                 <div className="mt-3">
-                  <Button href="/login" variant="secondary" size="sm">
+                  <Button
+                    href={`/login?next=/jobs/${job.id}`}
+                    variant="secondary"
+                    size="sm"
+                  >
                     Sign in to apply
                   </Button>
                 </div>
