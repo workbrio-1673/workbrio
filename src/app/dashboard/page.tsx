@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
 import { Card } from "@/components/Card";
 import { Logo } from "@/components/Logo";
@@ -8,15 +9,54 @@ import { AppNavbar } from "@/components/AppNavbar";
 import { Footer } from "@/components/Footer";
 import { StatsDisplay } from "@/components/StatsDisplay";
 import { ADMIN_EMAIL } from "@/lib/site";
+import { mapJobRow, splitJobs } from "@/lib/jobs";
+import {
+  salaryLabel,
+  todayISO,
+  type JobWithClient,
+} from "@/lib/supabase/types";
 
 /** This page reads the live session via cookies(), so it is always rendered dynamically. */
 
-const ROADMAP = [
-  { milestone: "M1", title: "Profiles", text: "Freelancer & client profiles, avatar upload, skills, portfolio.", done: true },
-  { milestone: "M2", title: "Jobs", text: "Post jobs, browse & filter, apply with proposals, applicant inbox.", done: true },
-  { milestone: "M3", title: "Feed", text: "LinkedIn-style posts, likes and comments.", done: true },
-  { milestone: "M4", title: "Messaging", text: "Realtime 1:1 chat tied to jobs, with notifications.", done: true },
-];
+/** Compact latest-jobs block for the dashboard strip. */
+function JobStrip({
+  title,
+  jobs,
+}: {
+  title: string;
+  jobs: JobWithClient[];
+}) {
+  return (
+    <Card>
+      <h3 className="text-lg font-bold text-ink-900">{title}</h3>
+      {jobs.length > 0 ? (
+        <ul className="mt-4 divide-y divide-slate-100">
+          {jobs.map((job) => (
+            <li key={job.id} className="py-3 first:pt-0 last:pb-0">
+              <Link href={`/jobs/${job.id}`} className="group block">
+                <span className="font-bold text-ink-900 group-hover:text-brand-600">
+                  {job.title}
+                </span>
+                <span className="mt-0.5 block text-sm text-slate-500">
+                  {[job.company_name, job.location]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+                <span className="mt-0.5 block text-sm font-semibold text-ink-900">
+                  {salaryLabel(job)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">
+          No jobs here right now — check back soon.
+        </p>
+      )}
+    </Card>
+  );
+}
 
 /** Protected home for signed-in members. Reads the session via cookies(),
  * so it renders dynamically per request. */
@@ -92,6 +132,74 @@ export default async function DashboardPage() {
     }
   }
 
+  // Latest live jobs for the strip below (same split as /jobs).
+  let latestJobs: JobWithClient[] = [];
+  try {
+    const { data } = await supabase
+      .from("jobs")
+      .select("*, client:client_id(full_name, avatar_url, headline, location)")
+      .eq("status", "open")
+      .or(`deadline.is.null,deadline.gte.${todayISO()}`)
+      .order("created_at", { ascending: false })
+      .limit(12);
+    latestJobs = (data ?? []).map((row) =>
+      mapJobRow(row as unknown as Record<string, unknown>)
+    );
+  } catch {
+    latestJobs = [];
+  }
+  const { pakistani, international } = splitJobs(latestJobs);
+
+  // Next steps, tailored to the member's role.
+  const nextSteps =
+    role === "client"
+      ? [
+          {
+            n: "1",
+            title: "Post a job",
+            text: "Describe the work, set a budget, and publish it to the network.",
+            href: "/jobs/new",
+            cta: "Post a job",
+          },
+          {
+            n: "2",
+            title: "Review applicants",
+            text: "Applications land in your inbox — accept the best fit.",
+            href: "/dashboard/proposals",
+            cta: "View applications",
+          },
+          {
+            n: "3",
+            title: "Chat & hire",
+            text: "Message the freelancer, agree terms, and get the work done.",
+            href: "/messages",
+            cta: "Open messages",
+          },
+        ]
+      : [
+          {
+            n: "1",
+            title: "Complete your profile",
+            text: "Add your skills, photo and portfolio so clients can find you.",
+            href: "/settings/profile",
+            cta: "Edit profile",
+          },
+          {
+            n: "2",
+            title: "Find a job",
+            text: "Browse Pakistani and international jobs and pick what fits you.",
+            href: "/jobs",
+            cta: "Browse jobs",
+          },
+          {
+            n: "3",
+            title: "Apply & track",
+            text: "Send a proposal with your cover note and CV, then follow it in My applications.",
+            href: "/dashboard/applications",
+            cta: "My applications",
+          },
+        ];
+
   const quickLinks =
     role === "client"
       ? [
@@ -151,9 +259,8 @@ export default async function DashboardPage() {
             !
           </h1>
           <p className="mt-3 max-w-2xl text-slate-300">
-            Your account is live and your session is working end-to-end
-            through Supabase Auth. The network features below roll out in the
-            next milestones.
+            Find real jobs, hire talent, and grow your freelance career —
+            all in one place, 100% free.
           </p>
         </div>
 
@@ -182,17 +289,44 @@ export default async function DashboardPage() {
         </div>
 
         <h2 className="mt-12 text-xl font-extrabold text-ink-900">
-          Roadmap
+          Latest jobs
         </h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {ROADMAP.map((r) => (
-            <Card key={r.milestone}>
-              <p className="text-xs font-bold uppercase tracking-widest text-flare-600">
-                {r.milestone} {r.done ? "✅" : ""}
-              </p>
-              <h3 className="mt-2 text-lg font-bold text-ink-900">{r.title}</h3>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <JobStrip title="🇵🇰 Pakistani Jobs" jobs={pakistani.slice(0, 3)} />
+          <JobStrip
+            title="🌍 International Jobs"
+            jobs={international.slice(0, 3)}
+          />
+        </div>
+        <p className="mt-6">
+          <Link
+            href="/jobs"
+            className="text-sm font-semibold text-brand-600 hover:text-brand-500"
+          >
+            Browse all jobs →
+          </Link>
+        </p>
+
+        <h2 className="mt-12 text-xl font-extrabold text-ink-900">
+          Your next steps
+        </h2>
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          {nextSteps.map((s) => (
+            <Card key={s.title}>
+              <span className="text-gradient text-4xl font-extrabold">
+                {s.n}
+              </span>
+              <h3 className="mt-3 text-lg font-bold text-ink-900">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                {r.text}
+                {s.text}
+              </p>
+              <p className="mt-4">
+                <Link
+                  href={s.href}
+                  className="text-sm font-semibold text-brand-600 hover:text-brand-500"
+                >
+                  {s.cta} →
+                </Link>
               </p>
             </Card>
           ))}
