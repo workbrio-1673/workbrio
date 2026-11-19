@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/site";
 import { AppNavbar } from "@/components/AppNavbar";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/Card";
@@ -50,6 +52,40 @@ async function loadService(id: string): Promise<ServiceWithFreelancer | null> {
   };
 }
 
+/** Per-service Open Graph/Twitter tags so a shared service previews as
+    THE SERVICE instead of the generic site card. Runs without a session:
+    services are publicly readable, and crawlers never have one.
+    Services have no image field, so the logo is the preview image. */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  if (!isSupabaseConfigured()) return {};
+  const service = await loadService(id);
+  if (!service) return {};
+  const cleanDescription = service.description.replace(/\s+/g, " ").trim();
+  const metaDescription =
+    cleanDescription.length > 0
+      ? cleanDescription.slice(0, 150)
+      : `${servicePriceLabel(service.price)} starting · ${service.category}`;
+  const pageUrl = `${SITE_URL}/services/${service.id}`;
+  return {
+    title: service.title,
+    description: metaDescription,
+    openGraph: {
+      title: service.title,
+      description: metaDescription,
+      url: pageUrl,
+      type: "website",
+      images: [{ url: "/logo.png", width: 512, height: 512, alt: service.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: service.title,
+      description: metaDescription,
+      images: ["/logo.png"],
+    },
+  };
+}
+
 /** Service detail page: /services/[id] */
 export default async function ServiceDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -72,12 +108,13 @@ export default async function ServiceDetailPage({ params }: PageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   const service = await loadService(id);
   if (!service) notFound();
 
-  const isOwner = user.id === service.freelancer_id;
+  // Viewing is public (so crawlers and logged-out visitors see the service);
+  // only ordering needs a signed-in user.
+  const isOwner = user != null && user.id === service.freelancer_id;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -115,7 +152,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
               </p>
 
               <div className="mt-4">
-                <ShareButtons title={service.title} />
+                <ShareButtons title={service.title} description={service.description} />
               </div>
 
               <h2 className="mt-8 text-lg font-extrabold text-ink-900">
@@ -177,12 +214,18 @@ export default async function ServiceDetailPage({ params }: PageProps) {
                     This is your service
                   </Button>
                 ) : service.status === "active" ? (
-                  <OrderServiceButton
-                    serviceTitle={service.title}
-                    servicePrice={service.price}
-                    freelancerId={service.freelancer_id}
-                    buyerId={user.id}
-                  />
+                  user ? (
+                    <OrderServiceButton
+                      serviceTitle={service.title}
+                      servicePrice={service.price}
+                      freelancerId={service.freelancer_id}
+                      buyerId={user.id}
+                    />
+                  ) : (
+                    <Button href="/login" variant="secondary" className="w-full">
+                      Sign in to order
+                    </Button>
+                  )
                 ) : (
                   <p className="text-sm text-slate-600">
                     This service is currently paused.
