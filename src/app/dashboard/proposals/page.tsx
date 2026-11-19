@@ -114,6 +114,7 @@ export default async function ProposalsInboxPage() {
                 jobId={job.id}
                 jobTitle={job.title}
                 proposals={proposals}
+                isEmployment={job.job_type != null}
               />
             ))
           )}
