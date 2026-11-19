@@ -34,7 +34,7 @@ const en = {
   "hero.freeBadge": "100% Free — forever",
   "cta.title": "Ready to work with brio?",
   "cta.subtitle":
-    "Join thousands of freelancers and clients building their future on Workbrio. Free to join — always.",
+    "Join freelancers and clients building their future on Workbrio. Free to join — always.",
   "cta.join": "Join Workbrio — it's free",
   "auth.email": "Email",
   "auth.password": "Password",
@@ -174,7 +174,7 @@ const ur: Dict = {
   "hero.freeBadge": "100% مفت — ہمیشہ کے لیے",
   "cta.title": "بریو کے ساتھ کام کرنے کے لیے تیار؟",
   "cta.subtitle":
-    "ورکبریو پر اپنا مستقبل بنانے والے ہزاروں فری لانسرز اور کلائنٹس میں شامل ہوں۔ جوائن کرنا مفت ہے — ہمیشہ۔",
+    "ورکبریو پر اپنا مستقبل بنانے والے فری لانسرز اور کلائنٹس میں شامل ہوں۔ جوائن کرنا مفت ہے — ہمیشہ۔",
   "cta.join": "ورکبریو جوائن کریں — بالکل مفت",
   "auth.email": "ای میل",
   "auth.password": "پاس ورڈ",
@@ -312,7 +312,7 @@ const hi: Dict = {
   "hero.freeBadge": "100% मुफ़ — हमेशा",
   "cta.title": "ब्रियो के साथ काम करने के लिए तैयार?",
   "cta.subtitle":
-    "Workbrio पर अपना भविष्य बनाने वाले हज़ारों फ्रीलांसरों और क्लाइंट्स से जुड़ें। जॉइन करना मुफ़्त है — हमेशा।",
+    "Workbrio पर अपना भविष्य बनाने वाले फ्रीलांसरों और क्लाइंट्स से जुड़ें। जॉइन करना मुफ़्त है — हमेशा।",
   "cta.join": "Workbrio जॉइन करें — बिल्कुल मुफ़्त",
   "auth.email": "ईमेल",
   "auth.password": "पासवर्ड",
@@ -450,7 +450,7 @@ const ar: Dict = {
   "hero.freeBadge": "مجاني 100% — للأبد",
   "cta.title": "مستعد للعمل ببريو؟",
   "cta.subtitle":
-    "انضم إلى آلاف المستقلين والعملاء الذين يبنون مستقبلهم على Workbrio. الانضمام مجاني — دائمًا.",
+    "انضم إلى المستقلين والعملاء الذين يبنون مستقبلهم على Workbrio. الانضمام مجاني — دائمًا.",
   "cta.join": "انضم إلى Workbrio — مجانًا",
   "auth.email": "البريد الإلكتروني",
   "auth.password": "كلمة المرور",
@@ -588,7 +588,7 @@ const es: Dict = {
   "hero.freeBadge": "100% gratis — para siempre",
   "cta.title": "¿Listo para trabajar con brío?",
   "cta.subtitle":
-    "Únete a miles de freelancers y clientes que construyen su futuro en Workbrio. Unirse es gratis — siempre.",
+    "Únete a los freelancers y clientes que construyen su futuro en Workbrio. Unirse es gratis — siempre.",
   "cta.join": "Únete a Workbrio — es gratis",
   "auth.email": "Correo electrónico",
   "auth.password": "Contraseña",
@@ -726,7 +726,7 @@ const fr: Dict = {
   "hero.freeBadge": "100% gratuit — pour toujours",
   "cta.title": "Prêt à travailler avec brio ?",
   "cta.subtitle":
-    "Rejoignez des milliers de freelances et de clients qui construisent leur avenir sur Workbrio. L'inscription est gratuite — pour toujours.",
+    "Rejoignez les freelances et les clients qui construisent leur avenir sur Workbrio. L'inscription est gratuite — pour toujours.",
   "cta.join": "Rejoindre Workbrio — c'est gratuit",
   "auth.email": "E-mail",
   "auth.password": "Mot de passe",
@@ -864,7 +864,7 @@ const de: Dict = {
   "hero.freeBadge": "100% kostenlos — für immer",
   "cta.title": "Bereit, mit Brio zu arbeiten?",
   "cta.subtitle":
-    "Schließe dich Tausenden Freelancern und Kunden an, die ihre Zukunft auf Workbrio aufbauen. Beitritt kostenlos — für immer.",
+    "Schließe dich den Freelancern und Kunden an, die ihre Zukunft auf Workbrio aufbauen. Beitritt kostenlos — für immer.",
   "cta.join": "Workbrio beitreten — kostenlos",
   "auth.email": "E-Mail",
   "auth.password": "Passwort",
@@ -1002,7 +1002,7 @@ const pt: Dict = {
   "hero.freeBadge": "100% grátis — para sempre",
   "cta.title": "Pronto para trabalhar com brilho?",
   "cta.subtitle":
-    "Junte-se a milhares de freelancers e clientes construindo o futuro no Workbrio. Entrar é grátis — sempre.",
+    "Junte-se aos freelancers e clientes construindo o futuro no Workbrio. Entrar é grátis — sempre.",
   "cta.join": "Junte-se ao Workbrio — é grátis",
   "auth.email": "E-mail",
   "auth.password": "Senha",
@@ -1140,7 +1140,7 @@ const tr: Dict = {
   "hero.freeBadge": "100% ücretsiz — sonsuza dek",
   "cta.title": "Brio ile çalışmaya hazır mısın?",
   "cta.subtitle":
-    "Workbrio'da geleceğini inşa eden binlerce freelancer ve müşteriye katıl. Katılım ücretsiz — her zaman.",
+    "Workbrio'da geleceğini inşa eden freelancer ve müşterilere katıl. Katılım ücretsiz — her zaman.",
   "cta.join": "Workbrio'ya Katıl — ücretsiz",
   "auth.email": "E-posta",
   "auth.password": "Şifre",
@@ -1277,7 +1277,7 @@ const zh: Dict = {
   "hero.hireTalent": "招聘人才",
   "hero.freeBadge": "100% 免费 — 永远",
   "cta.title": "准备好充满活力地工作了吗？",
-  "cta.subtitle": "加入数千名在 Workbrio 上创造未来的自由职业者和客户。加入免费——永远免费。",
+  "cta.subtitle": "加入在 Workbrio 上创造未来的自由职业者和客户。加入免费——永远免费。",
   "cta.join": "加入 Workbrio——免费",
   "auth.email": "邮箱",
   "auth.password": "密码",
