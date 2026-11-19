@@ -69,11 +69,14 @@ export default async function LandingPage() {
     loadLatestJobs(),
     loadHeroCounts(),
   ]);
+  // Full live arrays (not sliced): the homepage search and category
+  // filters run client-side over all of them. LandingContent shows
+  // the first 4 + 4 by default and all matches once filtering starts.
   const { pakistani, international } = splitJobs(jobs);
   return (
     <LandingContent
-      latestPakistani={pakistani.slice(0, 4)}
-      latestInternational={international.slice(0, 4)}
+      allPakistani={pakistani}
+      allInternational={international}
       openJobsCount={counts.openJobs}
       memberCount={counts.members}
     />

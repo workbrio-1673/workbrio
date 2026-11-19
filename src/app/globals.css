@@ -22,6 +22,24 @@
 
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, sans-serif;
+
+  /* Homepage green palette (mockup style: #0A7A5E) + display fonts.
+     Used by the landing page only; the rest of the site keeps the
+     blue/purple brand ramp above. */
+  --color-mist: #f4f6f5;
+  --color-pine-50: #eaf6f1;
+  --color-pine-100: #d3ede2;
+  --color-pine-200: #a9dcc9;
+  --color-pine-300: #6fc3a6;
+  --color-pine-400: #35a985;
+  --color-pine-500: #0a7a5e;
+  --color-pine-600: #086a52;
+  --color-pine-700: #065f4a;
+  --color-pine-800: #054a3a;
+  --color-pine-900: #04382c;
+  --color-amber-soft: #fef3e2;
+  --font-jakarta: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-fraunces: "Fraunces", Georgia, serif;
 }
 
 :root {

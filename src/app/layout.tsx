@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import { LanguageProvider } from "@/components/LanguageProvider";
@@ -9,6 +9,21 @@ import { AIGuide } from "@/components/AIGuide";
 const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+/** Homepage display fonts (mockup style): Fraunces headings,
+ * Plus Jakarta Sans body. Loaded via next/font — no external CSS. */
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["700", "800"],
   display: "swap",
 });
 
@@ -46,7 +61,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${jakarta.variable} ${fraunces.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col bg-white text-ink-900">
         <LanguageProvider>
           <ViewTracker />
