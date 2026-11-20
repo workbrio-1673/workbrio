@@ -17,8 +17,8 @@ export function Navbar() {
   ];
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Logo />
+      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6">
+        <Logo height={36} />
         <div className="hidden items-center gap-8 md:flex">
           {LINKS.map((l) => (
             <Link
@@ -30,13 +30,13 @@ export function Navbar() {
             </Link>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <NotificationBell />
           <LanguageSwitcher compact />
-          <Button href="/login" variant="ghost" size="sm">
+          <Button href="/login" variant="ghost" size="sm" className="whitespace-nowrap px-3 sm:px-4">
             {t("nav.signIn")}
           </Button>
-          <Button href="/signup" size="sm">
+          <Button href="/signup" size="sm" className="whitespace-nowrap px-3 sm:px-4">
             {t("nav.join")}
           </Button>
         </div>

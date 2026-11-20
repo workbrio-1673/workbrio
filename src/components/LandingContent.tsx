@@ -381,12 +381,12 @@ export function LandingContent({
       {/* ————— HERO ————— */}
       <section className="mx-auto max-w-7xl px-4 pb-14 pt-12 sm:px-6 sm:pt-16">
         <div className="grid items-center gap-11 lg:grid-cols-[1.08fr_0.92fr]">
-          <div>
+          <div className="min-w-0">
             <p className="inline-flex items-center gap-2 rounded-full border border-pine-500/25 bg-pine-100 px-3.5 py-1.5 text-[13px] font-extrabold text-pine-700">
               <span className="inline-block h-2 w-2 rounded-full bg-pine-500" />
               International Freelancers Network
             </p>
-            <h1 className="mt-5 font-fraunces text-[clamp(38px,5.2vw,58px)] font-extrabold leading-[0.98] tracking-[-0.02em]">
+            <h1 className="mt-5 font-fraunces text-[clamp(32px,8.5vw,58px)] font-extrabold leading-[0.98] tracking-[-0.02em]">
               Freelance work with{" "}
               <span className="text-pine-600">0% commission.</span>
             </h1>
@@ -398,9 +398,11 @@ export function LandingContent({
               takes nothing.
             </p>
 
-            {/* Hero search — filters the real live jobs below. */}
+            {/* Hero search — filters the real live jobs below.
+                Stacked on phones (one row would force the page wider
+                than a 360px screen); side-by-side from sm up. */}
             <form
-              className="mt-6 flex gap-2 rounded-2xl border-[1.5px] border-slate-200 bg-white p-2 shadow-[0_10px_30px_rgba(10,60,45,0.08)]"
+              className="mt-6 flex flex-col gap-2 rounded-2xl border-[1.5px] border-slate-200 bg-white p-2 shadow-[0_10px_30px_rgba(10,60,45,0.08)] sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
                 scrollToJobs();
@@ -412,13 +414,13 @@ export function LandingContent({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Try “video editor”, “nurse”, “SEO”…"
                 aria-label="Search jobs"
-                className="min-w-0 flex-1 bg-transparent px-3 text-[15.5px] text-ink-900 outline-none placeholder:text-slate-400"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[15.5px] text-ink-900 outline-none placeholder:text-slate-400"
               />
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 aria-label="Category"
-                className="max-w-[150px] rounded-[10px] bg-slate-100 px-2.5 text-sm font-bold text-ink-900 outline-none"
+                className="w-full rounded-[10px] bg-slate-100 px-2.5 py-2.5 text-sm font-bold text-ink-900 outline-none sm:w-auto sm:max-w-[150px] sm:py-0"
               >
                 <option value="all">All Categories</option>
                 {CATEGORIES.filter((c) => c.id !== "all").map((c) => (
@@ -427,7 +429,7 @@ export function LandingContent({
                   </option>
                 ))}
               </select>
-              <Button type="submit" variant="pine">
+              <Button type="submit" variant="pine" className="w-full sm:w-auto">
                 Search Jobs
               </Button>
             </form>
@@ -462,7 +464,7 @@ export function LandingContent({
           </div>
 
           {/* Hero visual — newest REAL job + honest escrow note. */}
-          <div>
+          <div className="min-w-0">
             {newestJob ? (
               <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(10,60,45,0.08)]">
                 <p className="text-[11px] font-extrabold uppercase tracking-widest text-pine-600">
