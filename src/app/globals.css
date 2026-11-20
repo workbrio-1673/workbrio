@@ -48,6 +48,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Safety net: no stray wide element may ever force a sideways
+     scroll on phones. `clip` (unlike `hidden`) keeps sticky working. */
+  overflow-x: clip;
 }
 
 body {
@@ -55,6 +58,7 @@ body {
   color: #0a1730;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 /* Gradient text helper */
